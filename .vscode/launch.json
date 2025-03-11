@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Démarrer le Backend (Server)",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/server/src/index.js",
+        "cwd": "${workspaceFolder}/server",
+        "envFile": "${workspaceFolder}/server/.env",
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen"
+      },
+      {
+        "name": "Démarrer le Frontend (Client)",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3000",
+        "webRoot": "${workspaceFolder}/client/src",
+        "sourceMaps": true
+      },
+      {
+        "name": "Attacher au Serveur (Débogage)",
+        "type": "node",
+        "request": "attach",
+        "processId": "${command:PickProcess}",
+        "restart": true
+      }
+    ]
+  }
+  

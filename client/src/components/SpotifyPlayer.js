@@ -1,0 +1,374 @@
+import React, { useState, useEffect } from 'react';
+
+const SpotifyPlayer = ({ accessToken }) => {
+  const [player, setPlayer] = useState(null);
+  const [deviceId, setDeviceId] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [track, setTrack] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);  
+  const [trackInfo, setTrackInfo] = useState(null);
+  const [isBlurred, setIsBlurred] = useState(true);
+
+  // Playlist à utiliser
+  const DEFAULT_PLAYLIST_URI = 'spotify:playlist:7dSyZpWpn9ASoQIBUCJZ2g';
+
+  const startDefaultPlaylist = async () => {
+    if (!accessToken || !deviceId) return;
+
+    try {
+        await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            body: JSON.stringify({
+                context_uri: DEFAULT_PLAYLIST_URI,
+                offset: { position: 0 }, // Démarrer au début de la playlist
+            }),
+        });
+
+        console.log(`✅ Playlist de démarrage lancée : ${DEFAULT_PLAYLIST_URI}`);
+        fetchCurrentTrack(); // Met à jour l'affichage
+    } catch (error) {
+        console.error("❌ Erreur lors du démarrage de la playlist :", error);
+    }
+};
+
+
+  // Fonction pour récupérer les infos du morceau en cours
+  const fetchCurrentTrack = async () => {
+    if (!accessToken) return;
+
+    try {
+      const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.item) {
+          setTrackInfo({
+            name: data.item.name,
+            artist: data.item.artists.map(artist => artist.name).join(', '),
+            albumName: data.item.album.name,
+            albumReleaseYear: data.item.album.release_date.slice(0, 4),
+            albumCover: data.item.album.images[0]?.url || '', // Récupérer l'image de l'album
+          });
+          setIsBlurred(true);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération du morceau en cours:', error);
+    }
+  };
+
+
+  const removeBlur = () => {
+    setIsBlurred(false);
+};
+
+
+
+
+// Fonction pour activer le mode shuffle via l'API de Spotify
+const enableShuffle = async (deviceId) => {
+    const response = await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=true&device_id=${deviceId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });  
+    if (!response.ok) {
+      console.error('Erreur lors de l\'activation du mode shuffle');
+    } else {
+      console.log('Mode shuffle activé');
+    }
+  };
+
+
+
+
+
+  const togglePlayPause = async () => {
+    if (!player || !accessToken || !deviceId) return;
+
+    try {
+        if (isPlaying) {
+            // Mettre en pause
+            await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+            console.log('Lecture mise en pause');
+        } else {
+            // Reprendre la lecture SANS spécifier de nouvelle URI
+            await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+            console.log('Lecture reprise');
+        }
+
+        setIsPlaying(!isPlaying);
+    } catch (error) {
+        console.error('Erreur lors du changement d’état de lecture:', error);
+    }
+};
+
+
+
+
+
+const fadeInVolume = async () => {
+    if (!accessToken || !deviceId) return;
+
+    try {
+        await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=0&device_id=${deviceId}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        // Augmenter progressivement le volume en 1 seconde
+        for (let volume = 0; volume <= 100; volume += 10) {
+            await new Promise(res => setTimeout(res, 100)); // Attente de 100ms entre chaque palier
+            await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${volume}&device_id=${deviceId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+        }
+
+        console.log('Fondu en ouverture terminé');
+    } catch (error) {
+        console.error('Erreur lors du fondu en ouverture:', error);
+    }
+};
+
+
+
+
+ // Vérification en temps réel si un morceau démarre à 0s pour appliquer seek à 30s
+  useEffect(() => {
+    if (!accessToken || !deviceId) return;
+
+    const checkAndSeek = async () => {
+      try {
+        const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.progress_ms < 2000) {
+            console.log("Le morceau a commencé à 0s, repositionnement à 30s...");
+
+            const trackDuration = data.item.duration_ms; // Durée totale du morceau en millisecondes
+            const randomStart = Math.floor(Math.random() * (trackDuration / 2)); // Aléatoire entre 0 et 50% de la durée
+            console.log(`🎲 Démarrage aléatoire à ${randomStart / 1000}s sur un total de ${trackDuration / 1000}s`);
+
+            // Appliquer immédiatement le seek
+            await fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${randomStart}&device_id=${deviceId}`, {
+              method: 'PUT',
+              headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification du morceau en cours:', error);
+      }
+    };
+
+    const interval = setInterval(checkAndSeek, 500);
+    return () => clearInterval(interval);
+  }, [accessToken, deviceId]);
+
+
+
+  useEffect(() => {
+    if (accessToken && deviceId) {
+        startDefaultPlaylist();
+    }
+}, [accessToken, deviceId]);
+
+
+
+
+const skipToNext = async () => {
+    if (!accessToken || !deviceId) return;
+
+    try {
+        // Étape 1 : Baisser le volume à 0 avant de changer de morceau
+        await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=0&device_id=${deviceId}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        // Étape 2 : Passer au morceau suivant
+        await fetch(`https://api.spotify.com/v1/me/player/next?device_id=${deviceId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        // Étape 3 : Vérifier que le morceau a bien changé avant d'appliquer `seek`
+        let trackReady = false;
+        let attempts = 0;
+        let trackDuration = 0;
+
+        while (!trackReady && attempts < 10) {
+            await new Promise(res => setTimeout(res, 500));
+            const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.progress_ms < 2000) {
+                    trackReady = true;
+                    trackDuration = data.item.duration_ms;
+                }
+            }
+            attempts++;
+        }
+
+        // Étape 4 : Appliquer le seek à 30 secondes
+        const randomStart = Math.floor(Math.random() * (trackDuration / 2)); // Aléatoire entre 0 et 50% de la durée
+        console.log(`🎲 Démarrage aléatoire à ${randomStart / 1000}s sur un total de ${trackDuration / 1000}s`);
+
+        await fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${randomStart}&device_id=${deviceId}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        // Étape 5 : Relancer la lecture (toujours avec volume à 0)
+        await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        // Étape 6 : Appliquer progressivement le volume pour un fade-in fluide
+        for (let volume = 0; volume <= 100; volume += 10) {
+            await new Promise(res => setTimeout(res, 100));
+            await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${volume}&device_id=${deviceId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+        }
+
+        console.log('Lecture du morceau suivant à 30s avec fade-in');
+        fetchCurrentTrack();
+    } catch (error) {
+        console.error('Erreur lors du passage au morceau suivant:', error);
+    }
+};
+
+
+
+
+
+
+  // Fonction pour revenir au morceau précédent
+  const skipToPrevious = async () => {
+    if (!accessToken || !deviceId) return;
+
+    try {
+      await fetch(`https://api.spotify.com/v1/me/player/previous?device_id=${deviceId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+      fetchCurrentTrack(); // Met à jour la cover et les infos du morceau
+
+      console.log('Morceau précédent');
+    } catch (error) {
+      console.error('Erreur lors du retour au morceau précédent:', error);
+    }
+  };
+
+
+
+  // Initialisation du Spotify Web Playback SDK
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://sdk.scdn.co/spotify-player.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    script.onload = () => {
+      window.onSpotifyWebPlaybackSDKReady = () => {
+        const newPlayer = new window.Spotify.Player({
+          name: 'Web Player',
+          getOAuthToken: (cb) => cb(accessToken),
+          volume: 0.5,
+        });
+
+        newPlayer.on('ready', ({ device_id }) => {
+          console.log('Spotify Player prêt ! Device ID:', device_id);
+          setDeviceId(device_id);
+
+          // Activer le mode shuffle uniquement au premier démarrage
+          if (!isPlaying) {
+            enableShuffle(device_id);  // Activer le mode shuffle si nécessaire
+          }
+        
+          fetchCurrentTrack(); // Récupère les infos du morceau en cours au démarrage
+
+
+          newPlayer.addListener('initialization_error', (e) => {
+            console.log('Erreur d’initialisation du player:', e);
+          });
+
+
+        });
+
+        newPlayer.on('player_state_changed', (state) => {
+          if (state) {
+            setIsPlaying(!state.paused);
+            fetchCurrentTrack(); // Met à jour la cover et les infos du morceau
+          }
+        });
+
+        newPlayer.connect();
+        setPlayer(newPlayer);
+      };
+    };
+
+    return () => player && player.disconnect();
+  }, [accessToken]);
+
+  return (
+    <div className="spotify-player">
+
+        {/* Image de l'album avec flou cliquable */}
+        {trackInfo?.albumCover && (
+            <img 
+                src={trackInfo.albumCover} 
+                alt="Cover album"
+                className={isBlurred ? "blur" : "no-blur"}
+                onClick={() => setIsBlurred(false)}
+            />
+        )}
+
+        {/* Infos du morceau */}
+        <div 
+            className={`blur-container ${isBlurred ? "blur" : "no-blur"}`} 
+            onClick={() => setIsBlurred(false)}
+        >
+            <h2>{trackInfo?.name}</h2>
+            <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>
+            <h4>{trackInfo?.artist}</h4>
+        </div>
+
+        {/* 🎵 Boutons de contrôle comme Spotify */}
+        <div className="controls">
+            <button onClick={skipToPrevious}>⏮</button>
+            <button className="play-button" onClick={togglePlayPause}>
+                {isPlaying ? '⏸' : '▶'}
+            </button>
+            <button onClick={skipToNext}>⏭</button>
+        </div>
+    </div>
+);
+
+
+
+};
+
+export default SpotifyPlayer;
