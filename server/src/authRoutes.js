@@ -47,7 +47,9 @@ router.get("/callback", async (req, res) => {
         const { access_token, refresh_token } = response.data;
 
         // Ici, on stocke les tokens en session ou en base de données (à améliorer)
-        res.redirect(`http://localhost:3000?access_token=${access_token}&refresh_token=${refresh_token}`);
+        const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000"; // Fallback en local
+        res.redirect(`${FRONTEND_URL}?access_token=${access_token}&refresh_token=${refresh_token}`);
+        
     } catch (error) {
         console.error("Erreur d'authentification Spotify:", error);
         res.status(500).send("Erreur lors de l'authentification");
