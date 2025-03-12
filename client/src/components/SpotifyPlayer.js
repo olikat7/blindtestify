@@ -466,7 +466,10 @@ const skipToNext = async () => {
       {/* Infos du morceau avec texte flouté au départ */}
       <div 
   className={`info-container ${isTextBlurred ? "blurred-text" : "clear-text"}`} 
-  onClick={() => setIsTextBlurred(false)} // 🔹 Clic sur le texte = déflouter
+  onClick={() => {
+    setIsTextBlurred(false);
+    setShowOriginal(true); // 🔹 Afficher l’image originale en même temps que le texte
+  }}
 >
   <h2>{trackInfo?.name}</h2>
   <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>
