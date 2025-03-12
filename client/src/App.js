@@ -35,7 +35,7 @@ function App() {
   }, [accessToken]);
 
   return (
-    <div>
+    <div className="spotify-player">
 
       {!accessToken ? (
         <a href={`${API_URL}/auth/login`}>
