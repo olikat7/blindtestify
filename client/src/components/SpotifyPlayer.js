@@ -133,7 +133,8 @@ const fetchCurrentTrack = async () => {
           albumCoverOriginal: original, // 🔹 Image originale après clic
         });
 
-        setShowOriginal(false); // Toujours afficher l’image modifiée d’abord
+        setShowOriginal(false); // Afficher d’abord l’image modifiée
+        setIsTextBlurred(true); // Flouter le texte au début
       }
     }
   } catch (error) {
