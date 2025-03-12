@@ -322,48 +322,45 @@ const skipToNext = async () => {
     }
   };
 
+  
 
-
-  // Initialisation du Spotify Web Playback SDK
+  // 🎵 Initialisation du Spotify Web Playback SDK
   useEffect(() => {
     if (!accessToken) return;
 
-    const script = document.createElement('script');
-    script.src = 'https://sdk.scdn.co/spotify-player.js';
+    const script = document.createElement("script");
+    script.src = "https://sdk.scdn.co/spotify-player.js";
     script.async = true;
     document.body.appendChild(script);
 
     script.onload = () => {
       window.onSpotifyWebPlaybackSDKReady = () => {
         const newPlayer = new window.Spotify.Player({
-          name: 'Web Player',
+          name: "Web Player",
           getOAuthToken: (cb) => cb(accessToken),
-          volume: 0.5,
+          volume: 0.5
         });
 
-        newPlayer.on('ready', ({ device_id }) => {
-          console.log('Spotify Player prêt ! Device ID:', device_id);
+        newPlayer.on("ready", ({ device_id }) => {
+          console.log("✅ Spotify Player prêt ! Device ID:", device_id);
           setDeviceId(device_id);
+
+          // Vérifier les appareils disponibles et activer le Web Player
+          getAvailableDevices();
+          transferPlayback();
 
           // Activer le mode shuffle uniquement au premier démarrage
           if (!isPlaying) {
-            enableShuffle(device_id);  // Activer le mode shuffle si nécessaire
+            enableShuffle(device_id);
           }
-        
-          fetchCurrentTrack(); // Récupère les infos du morceau en cours au démarrage
 
-
-          newPlayer.addListener('initialization_error', (e) => {
-            console.log('Erreur d’initialisation du player:', e);
-          });
-
-
+          fetchCurrentTrack(); // Récupère les infos du morceau en cours
         });
 
-        newPlayer.on('player_state_changed', (state) => {
+        newPlayer.on("player_state_changed", (state) => {
           if (state) {
             setIsPlaying(!state.paused);
-            fetchCurrentTrack(); // Met à jour la cover et les infos du morceau
+            fetchCurrentTrack();
           }
         });
 
@@ -377,40 +374,36 @@ const skipToNext = async () => {
 
   return (
     <div className="spotify-player">
+      {/* Image de l'album avec flou cliquable */}
+      {trackInfo?.albumCover && (
+        <img 
+          src={trackInfo.albumCover} 
+          alt="Cover album"
+          className={isBlurred ? "blur" : "no-blur"}
+          onClick={() => setIsBlurred(false)}
+        />
+      )}
 
-        {/* Image de l'album avec flou cliquable */}
-        {trackInfo?.albumCover && (
-            <img 
-                src={trackInfo.albumCover} 
-                alt="Cover album"
-                className={isBlurred ? "blur" : "no-blur"}
-                onClick={() => setIsBlurred(false)}
-            />
-        )}
+      {/* Infos du morceau */}
+      <div 
+        className={`blur-container ${isBlurred ? "blur" : "no-blur"}`} 
+        onClick={() => setIsBlurred(false)}
+      >
+        <h2>{trackInfo?.name}</h2>
+        <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>
+        <h4>{trackInfo?.artist}</h4>
+      </div>
 
-        {/* Infos du morceau */}
-        <div 
-            className={`blur-container ${isBlurred ? "blur" : "no-blur"}`} 
-            onClick={() => setIsBlurred(false)}
-        >
-            <h2>{trackInfo?.name}</h2>
-            <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>
-            <h4>{trackInfo?.artist}</h4>
-        </div>
-
-        {/* 🎵 Boutons de contrôle comme Spotify */}
-        <div className="controls">
-            <button onClick={skipToPrevious}>⏮</button>
-            <button className="play-button" onClick={togglePlayPause}>
-                {isPlaying ? '⏸' : '▶'}
-            </button>
-            <button onClick={skipToNext}>⏭</button>
-        </div>
+      {/* 🎵 Boutons de contrôle */}
+      <div className="controls">
+        <button onClick={skipToPrevious}>⏮</button>
+        <button className="play-button" onClick={togglePlayPause}>
+          {isPlaying ? "⏸" : "▶"}
+        </button>
+        <button onClick={skipToNext}>⏭</button>
+      </div>
     </div>
-);
-
-
-
+  );
 };
 
 export default SpotifyPlayer;
