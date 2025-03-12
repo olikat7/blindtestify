@@ -8,11 +8,38 @@ const SpotifyPlayer = ({ accessToken }) => {
   const [isLoading, setIsLoading] = useState(true);  
   const [trackInfo, setTrackInfo] = useState(null);
   const [isBlurred, setIsBlurred] = useState(true);
+  const [debugLog, setDebugLog] = useState([]);
 
   // Playlist à utiliser
   const DEFAULT_PLAYLIST_URI = 'spotify:playlist:7dSyZpWpn9ASoQIBUCJZ2g';
 
 
+  // 🔹 Vérifier si une image locale existe
+  const checkIfLocalImageExists = (imageUrl) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = imageUrl;
+      img.onload = () => resolve(true);  // L'image existe
+      img.onerror = () => resolve(false); // L'image n'existe pas
+    });
+  };
+
+  // 🔹 Déterminer quelle image afficher
+  const getAlbumCover = async (albumId, spotifyCover) => {
+    if (!albumId) return spotifyCover;
+
+    const modifiedPath = `/albums/${albumId}-modified.jpg`;
+    const originalPath = `/albums/${albumId}.jpg`;
+
+    const modifiedExists = await checkIfLocalImageExists(modifiedPath);
+    const originalExists = await checkIfLocalImageExists(originalPath);
+
+    if (modifiedExists) {
+      return { modified: modifiedPath, original: originalExists ? originalPath : spotifyCover };
+    }
+
+    return { modified: spotifyCover, original: spotifyCover }; // Si pas d'image locale, utiliser Spotify
+  };
 
 
   const getAvailableDevices = async () => {
@@ -77,33 +104,40 @@ const SpotifyPlayer = ({ accessToken }) => {
 };
 
 
-  // Fonction pour récupérer les infos du morceau en cours
-  const fetchCurrentTrack = async () => {
-    if (!accessToken) return;
+// 🔹 Récupérer les infos du morceau en cours
+const fetchCurrentTrack = async () => {
+  if (!accessToken) return;
 
-    try {
-      const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
-        headers: { 'Authorization': `Bearer ${accessToken}` },
-      });
+  try {
+    const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.item) {
-          setTrackInfo({
-            name: data.item.name,
-            artist: data.item.artists.map(artist => artist.name).join(', '),
-            albumName: data.item.album.name,
-            albumReleaseYear: data.item.album.release_date.slice(0, 4),
-            albumCover: data.item.album.images[0]?.url || '', // Récupérer l'image de l'album
-          });
-          setIsBlurred(true);
-        }
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.item) {
+        const albumId = data.item.album.id;
+        const albumCover = data.item.album.images[0]?.url || ''; // Pochette Spotify par défaut
+
+        const { modified, original } = await getAlbumCover(albumId, albumCover);
+
+        setTrackInfo({
+          name: data.item.name,
+          artist: data.item.artists.map(artist => artist.name).join(', '),
+          albumId: albumId, // 🔹 Stocker l'ID de l'album
+          albumName: data.item.album.name,
+          albumReleaseYear: data.item.album.release_date.slice(0, 4),
+          albumCoverModified: modified, // 🔹 Image modifiée par défaut
+          albumCoverOriginal: original, // 🔹 Image originale après clic
+        });
+
+        setShowOriginal(false); // Toujours afficher l’image modifiée d’abord
       }
-    } catch (error) {
-      console.error('Erreur lors de la récupération du morceau en cours:', error);
     }
-  };
-
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération du morceau en cours:', error);
+  }
+};
 
   const removeBlur = () => {
     setIsBlurred(false);
@@ -409,23 +443,23 @@ const skipToNext = async () => {
     return () => player && player.disconnect();
   }, [accessToken]);
 
+
+
+  
   return (
     <div className="spotify-player">
-      {/* Image de l'album avec flou cliquable */}
-      {trackInfo?.albumCover && (
+      {/* Image de l'album avec gestion du changement */}
+      {trackInfo?.albumCoverModified && (
         <img 
-          src={trackInfo.albumCover} 
+          src={showOriginal ? trackInfo.albumCoverOriginal : trackInfo.albumCoverModified} 
           alt="Cover album"
-          className={isBlurred ? "blur" : "no-blur"}
-          onClick={() => setIsBlurred(false)}
+          className="album-cover"
+          onClick={() => setShowOriginal(true)} // 🔹 Afficher l’image originale au clic
         />
       )}
 
       {/* Infos du morceau */}
-      <div 
-        className={`blur-container ${isBlurred ? "blur" : "no-blur"}`} 
-        onClick={() => setIsBlurred(false)}
-      >
+      <div className="info-container">
         <h2>{trackInfo?.name}</h2>
         <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>
         <h4>{trackInfo?.artist}</h4>
