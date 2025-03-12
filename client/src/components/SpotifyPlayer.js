@@ -9,6 +9,7 @@ const SpotifyPlayer = ({ accessToken }) => {
   const [trackInfo, setTrackInfo] = useState(null);
   const [isBlurred, setIsBlurred] = useState(true);
   const [debugLog, setDebugLog] = useState([]);
+  const [showOriginal, setShowOriginal] = useState(false);
 
   // Playlist à utiliser
   const DEFAULT_PLAYLIST_URI = 'spotify:playlist:7dSyZpWpn9ASoQIBUCJZ2g';
@@ -445,7 +446,7 @@ const skipToNext = async () => {
 
 
 
-  
+
   return (
     <div className="spotify-player">
       {/* Image de l'album avec gestion du changement */}
