@@ -14,45 +14,8 @@ const SpotifyPlayer = ({ accessToken }) => {
 
 
 
-  const getAvailableDevices = async () => {
-    if (!accessToken) return;
-  
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me/player/devices", {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-  
-      const data = await response.json();
-      console.log("Appareils disponibles :", data.devices);
-  
-      if (data.devices.length === 0) {
-        alert("Aucun appareil Spotify actif détecté. Ouvrez Spotify sur votre iPhone.");
-      }
-    } catch (error) {
-      console.error("Impossible de récupérer les appareils :", error);
-    }
-  };
 
-
-  const transferPlayback = async () => {
-    if (!accessToken || !deviceId) return;
   
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me/player", {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ device_ids: [deviceId], play: true })
-      });
-  
-      console.log("Lecture transférée au Web Player");
-    } catch (error) {
-      console.error("Erreur lors du transfert de la lecture :", error);
-    }
-  };
-  
-
-
-
   const startDefaultPlaylist = async () => {
     if (!accessToken || !deviceId) return;
 
@@ -128,21 +91,10 @@ const enableShuffle = async (deviceId) => {
 
 
 
-const togglePlayPause = async () => {
-    if (!player || !accessToken || !deviceId) {
-        console.log("Le lecteur n'est pas encore prêt.");
-        return;
-    }
+  const togglePlayPause = async () => {
+    if (!player || !accessToken || !deviceId) return;
 
     try {
-        // Vérifier l'état du lecteur Spotify
-        const state = await player.getCurrentState();
-        if (!state) {
-            console.warn("Aucun appareil actif détecté. Ouvrez Spotify sur votre téléphone et sélectionnez votre appareil.");
-            alert("Aucun appareil actif trouvé. Assurez-vous que l'application Spotify est ouverte sur votre iPhone.");
-            return;
-        }
-
         if (isPlaying) {
             // Mettre en pause
             await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
@@ -151,32 +103,12 @@ const togglePlayPause = async () => {
             });
             console.log('Lecture mise en pause');
         } else {
-            // Vérifier si l'utilisateur est sur mobile (iPhone)
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-            if (isMobile) {
-                console.log("Lecture sur mobile détectée. Ajout d'un écouteur d'événement 'click'.");
-
-                // Lancer la lecture seulement après un clic utilisateur (nécessaire sur iOS)
-                document.body.addEventListener('click', async function playOnInteraction() {
-                    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `Bearer ${accessToken}` },
-                    });
-
-                    console.log("Lecture reprise après interaction.");
-                    document.body.removeEventListener('click', playOnInteraction); // Supprimer l'événement après un seul clic
-                }, { once: true });
-
-                alert("Appuyez n'importe où sur l'écran pour démarrer la lecture.");
-            } else {
-                // Reprendre la lecture directement sur desktop
-                await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${accessToken}` },
-                });
-                console.log("Lecture reprise sur desktop.");
-            }
+            // Reprendre la lecture SANS spécifier de nouvelle URI
+            await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+            console.log('Lecture reprise');
         }
 
         setIsPlaying(!isPlaying);
@@ -371,14 +303,9 @@ const skipToNext = async () => {
           volume: 0.5,
         });
 
-        newPlayer.addListener("ready", ({ device_id }) => {
-          console.log("Lecteur Spotify prêt avec ID :", device_id);
+        newPlayer.on('ready', ({ device_id }) => {
+          console.log('Spotify Player prêt ! Device ID:', device_id);
           setDeviceId(device_id);
-  
-          // Vérifier les appareils disponibles et activer la lecture
-          getAvailableDevices();
-          transferPlayback(); // Transférer la lecture au Web Player
-        });
 
           // Activer le mode shuffle uniquement au premier démarrage
           if (!isPlaying) {
