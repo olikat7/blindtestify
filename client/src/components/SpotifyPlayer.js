@@ -10,6 +10,7 @@ const SpotifyPlayer = ({ accessToken }) => {
   const [isBlurred, setIsBlurred] = useState(true);
   const [debugLog, setDebugLog] = useState([]);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [isTextBlurred, setIsTextBlurred] = useState(true);
 
   // Playlist à utiliser
   const DEFAULT_PLAYLIST_URI = 'spotify:playlist:7dSyZpWpn9ASoQIBUCJZ2g';
