@@ -454,22 +454,25 @@ const skipToNext = async () => {
       {/* Image de l'album avec gestion du changement */}
       {trackInfo?.albumCoverModified && (
         <img 
-          src={showOriginal ? trackInfo.albumCoverOriginal : trackInfo.albumCoverModified} 
-          alt="Cover album"
-          className="album-cover"
-          onClick={() => {
-            setShowOriginal(true);  // 🔹 Afficher l’image originale
-            setIsTextBlurred(false); // 🔹 Déflouter le texte
-          }}
-        />
+  src={showOriginal ? trackInfo.albumCoverOriginal : trackInfo.albumCoverModified} 
+  alt="Cover album"
+  className={`album-cover ${trackInfo.albumCoverModified === trackInfo.albumCoverOriginal ? "blurred-image" : ""}`}
+  onClick={() => {
+    setShowOriginal(true);
+    setIsTextBlurred(false);
+  }}
+/>
       )}
 
       {/* Infos du morceau avec texte flouté au départ */}
-      <div className={`info-container ${isTextBlurred ? "blurred-text" : "clear-text"}`}>
-        <h2>{trackInfo?.name}</h2>
-        <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>
-        <h4>{trackInfo?.artist}</h4>
-      </div>
+      <div 
+  className={`info-container ${isTextBlurred ? "blurred-text" : "clear-text"}`} 
+  onClick={() => setIsTextBlurred(false)} // 🔹 Cliquer sur le texte le défloute aussi
+>
+  <h2>{trackInfo?.name}</h2>
+  <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>
+  <h4>{trackInfo?.artist}</h4>
+</div>
 
       {/* 🎵 Boutons de contrôle */}
       <div className="controls">
