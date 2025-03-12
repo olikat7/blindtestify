@@ -75,8 +75,6 @@ const SpotifyPlayer = ({ accessToken }) => {
 
 
   // Fonction pour récupérer les infos du morceau en cours
-<<<<<<< Tabnine <<<<<<<
-  // Fonction pour récupérer les infos du morceau en cours//+
   const fetchCurrentTrack = async () => {
     if (!accessToken) return;
 
@@ -102,7 +100,6 @@ const SpotifyPlayer = ({ accessToken }) => {
       console.error('Erreur lors de la récupération du morceau en cours:', error);
     }
   };
->>>>>>> Tabnine >>>>>>>// {"conversationId":"3583bf2d-a0e2-4ea1-b3c8-37d2ed6a90dd","source":"instruct"}
 
 
   const removeBlur = () => {
@@ -131,7 +128,7 @@ const enableShuffle = async (deviceId) => {
 
 
 
-  const togglePlayPause = async () => {
+const togglePlayPause = async () => {
     if (!player || !accessToken || !deviceId) {
         console.log("Le lecteur n'est pas encore prêt.");
         return;
