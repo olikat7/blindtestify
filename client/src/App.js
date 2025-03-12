@@ -5,6 +5,7 @@ import './App.css';
 function App() {
   const [accessToken, setAccessToken] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
   // Récupérer le token d'accès de l'URL
   useEffect(() => {
@@ -37,7 +38,7 @@ function App() {
     <div>
 
       {!accessToken ? (
-        <a href="http://localhost:3001/auth/login">
+        <a href={`${API_URL}/auth/login`}>
           <button>Se connecter à Spotify</button>
         </a>
       ) : (
