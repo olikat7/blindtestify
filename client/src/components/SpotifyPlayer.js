@@ -451,23 +451,22 @@ const skipToNext = async () => {
 
   return (
     <div className="spotify-player">
-      {/* Image de l'album avec gestion du changement */}
-      {trackInfo?.albumCoverModified && (
-        <img 
-  src={showOriginal ? trackInfo.albumCoverOriginal : trackInfo.albumCoverModified} 
-  alt="Cover album"
-  className={`album-cover ${trackInfo.albumCoverModified === trackInfo.albumCoverOriginal ? "blurred-image" : ""}`}
-  onClick={() => {
-    setShowOriginal(true);
-    setIsTextBlurred(false);
-  }}
-/>
-      )}
+{trackInfo?.albumCoverModified && (
+  <img 
+    src={showOriginal ? trackInfo.albumCoverOriginal : trackInfo.albumCoverModified} 
+    alt="Cover album"
+    className={`album-cover ${showOriginal || trackInfo.albumCoverModified !== trackInfo.albumCoverOriginal ? "clear-image" : "blurred-image"}`}
+    onClick={() => {
+      setShowOriginal(true);
+      setIsTextBlurred(false);
+    }}
+  />
+)}
 
       {/* Infos du morceau avec texte flouté au départ */}
       <div 
   className={`info-container ${isTextBlurred ? "blurred-text" : "clear-text"}`} 
-  onClick={() => setIsTextBlurred(false)} // 🔹 Cliquer sur le texte le défloute aussi
+  onClick={() => setIsTextBlurred(false)} // 🔹 Clic sur le texte = déflouter
 >
   <h2>{trackInfo?.name}</h2>
   <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>

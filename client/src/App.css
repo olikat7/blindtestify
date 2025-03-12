@@ -149,10 +149,10 @@ button:hover {
   transform: scale(1.1);
 }
 
-
 .blurred-image {
   filter: blur(8px);
   transition: filter 0.3s ease-in-out;
+  cursor: pointer;
 }
 
 .blurred-text {
@@ -162,6 +162,11 @@ button:hover {
 }
 
 .clear-text {
+  filter: blur(0px);
+  transition: filter 0.3s ease-in-out;
+}
+
+.clear-image {
   filter: blur(0px);
   transition: filter 0.3s ease-in-out;
 }
