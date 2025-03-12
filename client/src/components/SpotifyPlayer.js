@@ -455,12 +455,15 @@ const skipToNext = async () => {
           src={showOriginal ? trackInfo.albumCoverOriginal : trackInfo.albumCoverModified} 
           alt="Cover album"
           className="album-cover"
-          onClick={() => setShowOriginal(true)} // 🔹 Afficher l’image originale au clic
+          onClick={() => {
+            setShowOriginal(true);  // 🔹 Afficher l’image originale
+            setIsTextBlurred(false); // 🔹 Déflouter le texte
+          }}
         />
       )}
 
-      {/* Infos du morceau */}
-      <div className="info-container">
+      {/* Infos du morceau avec texte flouté au départ */}
+      <div className={`info-container ${isTextBlurred ? "blurred-text" : "clear-text"}`}>
         <h2>{trackInfo?.name}</h2>
         <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>
         <h4>{trackInfo?.artist}</h4>

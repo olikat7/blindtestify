@@ -149,3 +149,12 @@ button:hover {
   transform: scale(1.1);
 }
 
+.blurred-text {
+  filter: blur(8px);
+  transition: filter 0.3s ease-in-out;
+}
+
+.clear-text {
+  filter: blur(0px);
+  transition: filter 0.3s ease-in-out;
+}
