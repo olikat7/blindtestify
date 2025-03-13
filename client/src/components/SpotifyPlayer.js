@@ -61,7 +61,7 @@ const resetPlayback = async () => {
 
 
 
-const playRandomTrack = async () => {
+const playRandomTrack = async (deviceId) => {
   if (!accessToken || !deviceId) return;
 
   try {
@@ -74,24 +74,25 @@ const playRandomTrack = async () => {
     const data = await response.json();
     const tracks = data.items.map(item => item.track.uri);
 
-    // 1️⃣ Supprimer les doublons et choisir un morceau vraiment aléatoire
+    // **Supprimer les doublons et sélectionner un morceau qui n'a PAS été joué**
     const uniqueTracks = [...new Set(tracks)];
     const randomIndex = Math.floor(Math.random() * uniqueTracks.length);
     const randomTrack = uniqueTracks[randomIndex];
 
-    // 2️⃣ Lancer le morceau
+    // **Lancer la lecture du morceau sélectionné**
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${accessToken}` },
       body: JSON.stringify({ uris: [randomTrack] }),
     });
 
-    console.log("🎵 Lecture d’un morceau totalement aléatoire :", randomTrack);
+    console.log("🎵 Lecture d’un NOUVEAU morceau aléatoire :", randomTrack);
 
   } catch (error) {
     console.error("❌ Erreur lors de la lecture aléatoire :", error);
   }
 };
+
 
 
   
