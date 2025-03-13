@@ -473,19 +473,24 @@ return (
     <div className="spotify-player">
       {trackInfo && (
         <>
-          {/* 🔹 Image de l'album (locale ou Spotify) */}
-          <img
-            src={trackInfo.localCoverPath}
-            onError={(e) => {
-              e.target.onerror = null; 
-              e.target.src = trackInfo.albumCoverSpotify; 
-              setIsBlurred(true);
-            }}
-            alt="Cover album"
-            className={isBlurred ? "blur" : "no-blur"}
-            onClick={handleUnblur}
-          />
 
+  {/* 🔹 Image de l'album (locale ou Spotify) */}
+<img
+  src={showOriginal ? trackInfo.albumCoverSpotify : trackInfo.localCoverPath} 
+  onError={(e) => {
+    e.target.onerror = null; 
+    e.target.src = trackInfo.albumCoverSpotify; // Si l'image locale n'existe pas, affiche celle de Spotify
+    setIsBlurred(true);
+    setShowOriginal(true); // Force l'affichage de l'originale
+  }}
+  alt="Cover album"
+  className={isBlurred ? "blur" : "no-blur"}
+  onClick={() => {
+    setShowOriginal(!showOriginal); // 🔄 Basculer entre image locale et Spotify
+    setIsBlurred(false); // Déflouter si c'était flou
+  }}
+/>
+  
           {/* 🔹 Infos du morceau */}
           <div
             className={`blur-container ${isBlurred ? "blur" : "no-blur"}`}
