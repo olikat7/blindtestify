@@ -4,7 +4,7 @@ const SpotifyPlayer = ({ accessToken }) => {
   const [player, setPlayer] = useState(null);
   const [deviceId, setDeviceId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [track, setTrack] = useState(null);
+  const [track, setTrack] = useState(null); 
   const [isLoading, setIsLoading] = useState(true);  
   const [trackInfo, setTrackInfo] = useState(null);
   const [isBlurred, setIsBlurred] = useState(true);
