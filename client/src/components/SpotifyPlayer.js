@@ -22,25 +22,27 @@ const resetPlayback = async () => {
   if (!accessToken || !deviceId) return;
 
   try {
-    // 1️⃣ STOP la lecture actuelle (évitons les conflits)
-    await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
+    // 1️⃣ Forcer Spotify à arrêter complètement la session actuelle
+    await fetch(`https://api.spotify.com/v1/me/player/pause`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${accessToken}` },
     });
-    console.log("⏹️ Session arrêtée.");
 
-    // 2️⃣ Attendre un peu pour s'assurer que la session est bien stoppée
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log("⏹️ Lecture arrêtée.");
 
-    // 3️⃣ Vider complètement la file d'attente Spotify (si nécessaire)
-    await fetch(`https://api.spotify.com/v1/me/player/queue?device_id=${deviceId}`, {
-      method: 'DELETE',
+    // 2️⃣ Passer à un autre device temporairement (HACK pour forcer le reset)
+    await fetch(`https://api.spotify.com/v1/me/player/transfer`, {
+      method: 'PUT',
       headers: { 'Authorization': `Bearer ${accessToken}` },
+      body: JSON.stringify({ device_ids: [deviceId], play: false })
     });
 
-    console.log("🗑️ File d'attente vidée.");
+    console.log("🔄 Reconnexion forcée au Web Player.");
 
-    // 4️⃣ Lancer un morceau aléatoire après reset
+    // 3️⃣ Attendre un instant pour éviter le conflit de session
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // 4️⃣ Lancer un morceau totalement aléatoire
     await playRandomTrack();
 
   } catch (error) {
@@ -50,6 +52,41 @@ const resetPlayback = async () => {
 
 
 
+
+const playRandomTrack = async () => {
+  if (!accessToken || !deviceId) return;
+
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/playlists/4zlxNfdlDOM5OnGv2TaPUP/tracks`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+
+    if (!response.ok) throw new Error("Impossible de récupérer la playlist.");
+
+    const data = await response.json();
+    const tracks = data.items.map(item => item.track.uri);
+
+    // 1️⃣ Supprimer les doublons et choisir un morceau vraiment aléatoire
+    const uniqueTracks = [...new Set(tracks)];
+    const randomIndex = Math.floor(Math.random() * uniqueTracks.length);
+    const randomTrack = uniqueTracks[randomIndex];
+
+    // 2️⃣ Lancer le morceau
+    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      body: JSON.stringify({ uris: [randomTrack] }),
+    });
+
+    console.log("🎵 Lecture d’un morceau totalement aléatoire :", randomTrack);
+
+  } catch (error) {
+    console.error("❌ Erreur lors de la lecture aléatoire :", error);
+  }
+};
+
+
+  
   
 
   // 🔹 Vérifier si une image locale existe
