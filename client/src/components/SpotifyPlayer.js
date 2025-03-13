@@ -127,43 +127,43 @@ const playRandomTrack = async (deviceId) => {
 };
 
 
-// 🔹 Récupérer les infos du morceau en cours
-  const fetchCurrentTrack = async () => {
-    if (!accessToken) return;
 
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+  
+const fetchCurrentTrack = async () => {
+  if (!accessToken) return;
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.item) {
-          const albumCoverSpotify = data.item.album.images[0]?.url || "";
-          const albumCoverId = extractImageId(albumCoverSpotify);
-          const localCoverPath = `/albums/${albumCoverId}.jpeg`; // 📂 Vérification dans public/albums/
+  try {
+    const response = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
-          // Vérifier si l'image locale existe en la chargeant dans un objet Image
-          const img = new Image();
-          img.src = localCoverPath;
-          img.onload = () => setIsBlurred(false); // ❗ PAS de flou si l’image locale existe
-          img.onerror = () => setIsBlurred(true); // ❗ Flou si l’image locale n'existe pas
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.item) {
+        const albumCoverSpotify = data.item.album.images[0]?.url || "";
+        const albumCoverId = extractImageId(albumCoverSpotify);
+        const localCoverPath = `/albums/${albumCoverId}.jpeg`; // 📂 Vérification dans public/albums/
 
-          setTrackInfo({
-            name: data.item.name,
-            artist: data.item.artists.map((artist) => artist.name).join(", "),
-            albumName: data.item.album.name,
-            albumReleaseYear: data.item.album.release_date.slice(0, 4),
-            albumCoverSpotify,
-            albumCoverId,
-            localCoverPath,
-          });
-        }
+        // ✅ **🔹 REMETTRE LE FLOU À CHAQUE NOUVEAU MORCEAU**
+        setIsBlurred(true);
+        setShowOriginal(false);
+
+        setTrackInfo({
+          name: data.item.name,
+          artist: data.item.artists.map((artist) => artist.name).join(", "),
+          albumName: data.item.album.name,
+          albumReleaseYear: data.item.album.release_date.slice(0, 4),
+          albumCoverSpotify,
+          albumCoverId,
+          localCoverPath,
+        });
       }
-    } catch (error) {
-      console.error("❌ Erreur lors de la récupération du morceau en cours:", error);
     }
-  };
+  } catch (error) {
+    console.error("❌ Erreur lors de la récupération du morceau en cours:", error);
+  }
+};
+
 
 
 
