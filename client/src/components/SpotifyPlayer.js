@@ -330,6 +330,13 @@ const fadeInVolume = async () => {
 }, [accessToken, deviceId]);
 
 
+useEffect(() => {
+  if (trackInfo) {
+    console.log("🎵 Nouveau morceau détecté → Floutage activé !");
+    setIsBlurred(true);
+    setShowOriginal(false);
+  }
+}, [trackInfo]); // 🔄 Se déclenche à CHAQUE nouveau morceau
 
 
 const skipToNext = async () => {
@@ -483,12 +490,13 @@ return (
     setShowOriginal(true); // Force l'affichage de l'originale
   }}
   alt="Cover album"
-  className={isBlurred && !showOriginal ? "blur" : "no-blur"} // 🔹 Ne pas reflouter après un clic
+  className={isBlurred ? "blur" : "no-blur"} // 🔥 Toujours flouter au départ
   onClick={() => {
-    setShowOriginal(!showOriginal); // 🔄 Alterner entre local & Spotify
-    setIsBlurred(false); // ❗ Empêcher le refloutage immédiat
+    setShowOriginal(!showOriginal);
+    setIsBlurred(false); // ❗ Défloutage au clic
   }}
 />
+
   
           {/* 🔹 Infos du morceau */}
           <div
