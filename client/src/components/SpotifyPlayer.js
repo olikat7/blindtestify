@@ -502,9 +502,8 @@ const skipToNext = async () => {
     setShowOriginal(true); // 🔹 Afficher l’image originale en même temps que le texte
   }}
 >
-  <h2>{trackInfo?.name}</h2>
+  <h2>{trackInfo?.artist} - {trackInfo?.name}</h2>
   <p>{trackInfo?.albumName} ({trackInfo?.albumReleaseYear})</p>
-  <h4>{trackInfo?.artist}</h4>
 </div>
 
       {/* 🎵 Boutons de contrôle */}
