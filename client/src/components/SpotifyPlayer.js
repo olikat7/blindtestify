@@ -26,6 +26,8 @@ const SpotifyPlayer = ({ accessToken }) => {
     });
   };
 
+
+  
   // 🔹 Déterminer quelle image afficher
   const getAlbumCover = async (albumId, spotifyCover) => {
     if (!albumId) return spotifyCover;
@@ -44,45 +46,7 @@ const SpotifyPlayer = ({ accessToken }) => {
   };
 
 
-  const getAvailableDevices = async () => {
-    if (!accessToken) return;
-  
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me/player/devices", {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-  
-      const data = await response.json();
-      console.log("Appareils disponibles :", data.devices);
-  
-      if (data.devices.length === 0) {
-        alert("Aucun appareil Spotify actif détecté. Ouvrez Spotify sur votre iPhone.");
-      }
-    } catch (error) {
-      console.error("Impossible de récupérer les appareils :", error);
-    }
-  };
-  
 
-
-
-  const transferPlayback = async () => {
-    if (!accessToken || !deviceId) return;
-  
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me/player", {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ device_ids: [deviceId], play: true })
-      });
-  
-      console.log("Lecture transférée au Web Player");
-    } catch (error) {
-      console.error("Erreur lors du transfert de la lecture :", error);
-    }
-  };
-
-  
 
   
   const startDefaultPlaylist = async () => {
@@ -418,12 +382,6 @@ const skipToNext = async () => {
         newPlayer.on("ready", ({ device_id }) => {
           console.log("✅ Spotify Player prêt ! Device ID:", device_id);
           setDeviceId(device_id);
-          enableShuffle();
-
-          // Vérifier les appareils disponibles et activer le Web Player
-          getAvailableDevices();
-          transferPlayback();
-          enableShuffle();
 
           // Activer le mode shuffle uniquement au premier démarrage
           if (!isPlaying) {
