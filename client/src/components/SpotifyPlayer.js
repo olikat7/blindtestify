@@ -500,5 +500,14 @@ const skipToNext = async () => {
     </div>
   );
 };
+      {/* 🎵 Boutons de contrôle */}
+      <div className="controls">
+        <button onClick={skipToPrevious}>⏮</button>
+        <button className="play-button" onClick={togglePlayPause}>
+          {isPlaying ? "⏸" : "▶"}
+        </button>
+        <button onClick={skipToNext}>⏭</button>
+      </div>
+
 
 export default SpotifyPlayer;
