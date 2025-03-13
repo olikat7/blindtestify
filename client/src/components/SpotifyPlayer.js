@@ -469,7 +469,7 @@ const skipToNext = async () => {
 
 
 
- return (
+return (
     <div className="spotify-player">
       {trackInfo && (
         <>
@@ -477,37 +477,36 @@ const skipToNext = async () => {
           <img
             src={trackInfo.localCoverPath}
             onError={(e) => {
-              e.target.onerror = null; // Évite la boucle infinie
-              e.target.src = trackInfo.albumCoverSpotify; // Si l'image locale n'existe pas, affiche celle de Spotify
-              setIsBlurred(true); // ❗ Ajoute le flou UNIQUEMENT si on affiche l’image Spotify
+              e.target.onerror = null; 
+              e.target.src = trackInfo.albumCoverSpotify; 
+              setIsBlurred(true);
             }}
             alt="Cover album"
             className={isBlurred ? "blur" : "no-blur"}
-            onClick={handleUnblur} // 🔹 Déflouter en cliquant
+            onClick={handleUnblur}
           />
 
           {/* 🔹 Infos du morceau */}
           <div
             className={`blur-container ${isBlurred ? "blur" : "no-blur"}`}
-            onClick={handleUnblur} // 🔹 Déflouter en cliquant sur le texte aussi
+            onClick={handleUnblur}
           >
             <h2>{trackInfo.name}</h2>
             <p>{trackInfo.albumName} ({trackInfo.albumReleaseYear})</p>
             <h4>{trackInfo.artist}</h4>
           </div>
+
+          {/* 🎵 Boutons de contrôle */}
+          <div className="controls">
+            <button onClick={skipToPrevious}>⏮</button>
+            <button className="play-button" onClick={togglePlayPause}>
+              {isPlaying ? "⏸" : "▶"}
+            </button>
+            <button onClick={skipToNext}>⏭</button>
+          </div>
         </>
       )}
     </div>
-  );
-};
-      {/* 🎵 Boutons de contrôle */}
-      <div className="controls">
-        <button onClick={skipToPrevious}>⏮</button>
-        <button className="play-button" onClick={togglePlayPause}>
-          {isPlaying ? "⏸" : "▶"}
-        </button>
-        <button onClick={skipToNext}>⏭</button>
-      </div>
-
+);
 
 export default SpotifyPlayer;
