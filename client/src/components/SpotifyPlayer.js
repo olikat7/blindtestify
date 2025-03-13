@@ -423,6 +423,7 @@ const skipToNext = async () => {
           // Vérifier les appareils disponibles et activer le Web Player
           getAvailableDevices();
           transferPlayback();
+          enableShuffle();
 
           // Activer le mode shuffle uniquement au premier démarrage
           if (!isPlaying) {
