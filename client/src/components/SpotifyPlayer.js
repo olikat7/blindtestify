@@ -418,6 +418,7 @@ const skipToNext = async () => {
         newPlayer.on("ready", ({ device_id }) => {
           console.log("✅ Spotify Player prêt ! Device ID:", device_id);
           setDeviceId(device_id);
+          enableShuffle();
 
           // Vérifier les appareils disponibles et activer le Web Player
           getAvailableDevices();
