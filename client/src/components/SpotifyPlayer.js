@@ -22,34 +22,42 @@ const resetPlayback = async () => {
   if (!accessToken || !deviceId) return;
 
   try {
-    // 1️⃣ Forcer Spotify à arrêter complètement la session actuelle
+    console.log("⏹️ STOP lecture en cours...");
     await fetch(`https://api.spotify.com/v1/me/player/pause`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${accessToken}` },
     });
 
-    console.log("⏹️ Lecture arrêtée.");
-
-    // 2️⃣ Passer à un autre device temporairement (HACK pour forcer le reset)
+    // 🔄 **Passer temporairement à un autre device (hack pour forcer Spotify à oublier la session)**
     await fetch(`https://api.spotify.com/v1/me/player/transfer`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${accessToken}` },
       body: JSON.stringify({ device_ids: [deviceId], play: false })
     });
 
-    console.log("🔄 Reconnexion forcée au Web Player.");
+    console.log("🔀 Mode shuffle activé !");
+    
+    // 🔥 **ATTENDRE pour éviter le conflit entre l'arrêt et le nouveau lancement**
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // 3️⃣ Attendre un instant pour éviter le conflit de session
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // 🗑 **Vider la file d'attente (empêche Spotify de rejouer les morceaux précédents)**
+    await fetch(`https://api.spotify.com/v1/me/player/queue`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
 
-    // 4️⃣ Lancer un morceau totalement aléatoire
-    await playRandomTrack();
+    console.log("🗑️ File d'attente vidée.");
+
+    // 🔀 **Activer le shuffle APRÈS la réinitialisation complète**
+    await enableShuffle(deviceId);
+
+    // 🎵 **Lancer un morceau totalement aléatoire après avoir TOUT reset**
+    await playRandomTrack(deviceId);
 
   } catch (error) {
-    console.error("❌ Erreur lors de la réinitialisation de la session :", error);
+    console.error("❌ Erreur lors de la réinitialisation complète :", error);
   }
 };
-
 
 
 
