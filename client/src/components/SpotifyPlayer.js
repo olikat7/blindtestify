@@ -165,7 +165,32 @@ const fetchCurrentTrack = async () => {
 };
 
 
+useEffect(() => {
+  if (trackInfo) {
+    console.log("🎵 Nouveau morceau détecté → Vérification de l'image locale...");
 
+    const img = new Image();
+    img.src = trackInfo.localCoverPath;
+
+    img.onload = () => {
+      console.log("✅ Image locale trouvée, pas de flou.");
+      setIsBlurred(false); // Si l'image locale existe, PAS de flou
+    };
+
+    img.onerror = () => {
+      console.log("❌ Image locale NON trouvée, application du flou.");
+      setIsBlurred(true); // Si l'image locale n'existe PAS, alors flouter
+    };
+
+    setShowOriginal(false); // Toujours afficher l'image locale au départ
+  }
+}, [trackInfo]); // 🔄 Se déclenche à CHAQUE changement de morceau
+
+
+
+
+
+  
 
   // 🔹 Déflouter la cover et afficher la version originale de Spotify
   const handleUnblur = () => {
@@ -330,14 +355,6 @@ const fadeInVolume = async () => {
 }, [accessToken, deviceId]);
 
 
-useEffect(() => {
-  if (trackInfo) {
-    console.log("🎵 Nouveau morceau détecté → Floutage activé !");
-    setIsBlurred(true);
-    setShowOriginal(false);
-  }
-}, [trackInfo]); // 🔄 Se déclenche à CHAQUE nouveau morceau
-
 
 const skipToNext = async () => {
     if (!accessToken || !deviceId) return;
@@ -487,15 +504,16 @@ return (
   onError={(e) => {
     e.target.onerror = null; 
     e.target.src = trackInfo.albumCoverSpotify; 
-    setShowOriginal(true); // Force l'affichage de l'originale
+    setIsBlurred(true); // Si l’image locale ne charge pas, flouter
   }}
   alt="Cover album"
-  className={isBlurred ? "blur" : "no-blur"} // 🔥 Toujours flouter au départ
+  className={isBlurred ? "blur" : "no-blur"} // 🔥 Seulement flouter si pas de fichier local
   onClick={() => {
     setShowOriginal(!showOriginal);
     setIsBlurred(false); // ❗ Défloutage au clic
   }}
 />
+
 
   
           {/* 🔹 Infos du morceau */}
