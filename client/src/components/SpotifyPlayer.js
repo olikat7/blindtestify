@@ -169,22 +169,26 @@ useEffect(() => {
   if (trackInfo) {
     console.log("🎵 Nouveau morceau détecté → Vérification de l'image locale...");
 
+    // 🔹 Vérifier si une image locale existe
     const img = new Image();
     img.src = trackInfo.localCoverPath;
 
     img.onload = () => {
-      console.log("✅ Image locale trouvée, pas de flou.");
-      setIsBlurred(false); // Si l'image locale existe, PAS de flou
+      console.log("✅ Image locale trouvée, pas de flou sur l'image.");
+      setIsBlurred(false); // L’image locale est nette
     };
 
     img.onerror = () => {
-      console.log("❌ Image locale NON trouvée, application du flou.");
-      setIsBlurred(true); // Si l'image locale n'existe PAS, alors flouter
+      console.log("❌ Image locale NON trouvée, flou sur l'image.");
+      setIsBlurred(true); // L’image Spotify est floutée
     };
 
+    // 🔹 **TOUJOURS flouter le texte au début du morceau**
+    setIsTextBlurred(true);
     setShowOriginal(false); // Toujours afficher l'image locale au départ
   }
-}, [trackInfo]); // 🔄 Se déclenche à CHAQUE changement de morceau
+}, [trackInfo]); // 🔄 Se déclenche à CHAQUE nouveau morceau
+
 
 
 
@@ -498,7 +502,7 @@ return (
       {trackInfo && (
         <>
 
-  {/* 🔹 Image de l'album (locale ou Spotify) */}
+{/* 🔹 Image de l'album (locale ou Spotify) */}
 <img
   src={showOriginal ? trackInfo.albumCoverSpotify : trackInfo.localCoverPath} 
   onError={(e) => {
@@ -510,21 +514,20 @@ return (
   className={isBlurred ? "blur" : "no-blur"} // 🔥 Seulement flouter si pas de fichier local
   onClick={() => {
     setShowOriginal(!showOriginal);
-    setIsBlurred(false); // ❗ Défloutage au clic
+    setIsBlurred(false); // ❗ Défloutage de l’image
+    setIsTextBlurred(false); // ❗ Défloutage du texte aussi
   }}
 />
 
-
-  
-          {/* 🔹 Infos du morceau */}
-          <div
-            className={`blur-container ${isBlurred ? "blur" : "no-blur"}`}
-            onClick={handleUnblur}
-          >
-            <h2>{trackInfo.name}</h2>
-            <p>{trackInfo.albumName} ({trackInfo.albumReleaseYear})</p>
-            <h4>{trackInfo.artist}</h4>
-          </div>
+{/* 🔹 Infos du morceau (Titre, Album, Artiste) */}
+<div
+  className={`blur-container ${isTextBlurred ? "blur" : "no-blur"}`} 
+  onClick={() => setIsTextBlurred(false)} // ❗ Déflouter en cliquant sur le texte
+>
+  <h2>{trackInfo.name}</h2>
+  <p>{trackInfo.albumName} ({trackInfo.albumReleaseYear})</p>
+  <h4>{trackInfo.artist}</h4>
+</div>
 
           {/* 🎵 Boutons de contrôle */}
           <div className="controls">
