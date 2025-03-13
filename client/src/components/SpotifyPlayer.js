@@ -479,15 +479,14 @@ return (
   src={showOriginal ? trackInfo.albumCoverSpotify : trackInfo.localCoverPath} 
   onError={(e) => {
     e.target.onerror = null; 
-    e.target.src = trackInfo.albumCoverSpotify; // Si l'image locale n'existe pas, affiche celle de Spotify
-    setIsBlurred(true);
+    e.target.src = trackInfo.albumCoverSpotify; 
     setShowOriginal(true); // Force l'affichage de l'originale
   }}
   alt="Cover album"
-  className={isBlurred ? "blur" : "no-blur"}
+  className={isBlurred && !showOriginal ? "blur" : "no-blur"} // 🔹 Ne pas reflouter après un clic
   onClick={() => {
-    setShowOriginal(!showOriginal); // 🔄 Basculer entre image locale et Spotify
-    setIsBlurred(false); // Déflouter si c'était flou
+    setShowOriginal(!showOriginal); // 🔄 Alterner entre local & Spotify
+    setIsBlurred(false); // ❗ Empêcher le refloutage immédiat
   }}
 />
   
