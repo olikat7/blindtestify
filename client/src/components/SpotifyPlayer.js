@@ -508,5 +508,6 @@ return (
       )}
     </div>
 );
+};
 
 export default SpotifyPlayer;
