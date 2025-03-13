@@ -16,6 +16,42 @@ const SpotifyPlayer = ({ accessToken }) => {
   const DEFAULT_PLAYLIST_URI = 'spotify:playlist:7dSyZpWpn9ASoQIBUCJZ2g';
 
 
+
+// Reset Session
+const resetPlayback = async () => {
+  if (!accessToken || !deviceId) return;
+
+  try {
+    // 1️⃣ STOP la lecture actuelle (évitons les conflits)
+    await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+    console.log("⏹️ Session arrêtée.");
+
+    // 2️⃣ Attendre un peu pour s'assurer que la session est bien stoppée
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // 3️⃣ Vider complètement la file d'attente Spotify (si nécessaire)
+    await fetch(`https://api.spotify.com/v1/me/player/queue?device_id=${deviceId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+
+    console.log("🗑️ File d'attente vidée.");
+
+    // 4️⃣ Lancer un morceau aléatoire après reset
+    await playRandomTrack();
+
+  } catch (error) {
+    console.error("❌ Erreur lors de la réinitialisation de la session :", error);
+  }
+};
+
+
+
+  
+
   // 🔹 Vérifier si une image locale existe
   const checkIfLocalImageExists = (imageUrl) => {
     return new Promise((resolve) => {
@@ -415,7 +451,7 @@ const skipToNext = async () => {
           console.log("✅ Spotify Player prêt ! Device ID:", device_id);
           setDeviceId(device_id);
           enableShuffle(device_id);
-          playRandomTrack();
+          resetPlayback();
 
         
           fetchCurrentTrack(); // Récupère les infos du morceau en cours
