@@ -45,7 +45,39 @@ const SpotifyPlayer = ({ accessToken }) => {
     return { modified: spotifyCover, original: spotifyCover }; // Si pas d'image locale, utiliser Spotify
   };
 
+  
 
+
+  const playRandomTrack = async () => {
+  if (!accessToken || !deviceId) return;
+
+  try {
+    // Récupérer les morceaux de la playlist
+    const response = await fetch(`https://api.spotify.com/v1/playlists/4zlxNfdlDOM5OnGv2TaPUP/tracks`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+    
+    if (!response.ok) throw new Error("Impossible de récupérer la playlist.");
+
+    const data = await response.json();
+    const tracks = data.items.map(item => item.track.uri);
+
+    // Sélectionner un morceau aléatoire
+    const randomIndex = Math.floor(Math.random() * tracks.length);
+    const randomTrack = tracks[randomIndex];
+
+    // Démarrer la lecture sur ce morceau
+    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      body: JSON.stringify({ uris: [randomTrack] }),
+    });
+
+    console.log("🎵 Lecture aléatoire d’un morceau au démarrage !");
+  } catch (error) {
+    console.error("❌ Erreur lors de la lecture aléatoire :", error);
+  }
+};
 
 
   
@@ -382,12 +414,10 @@ const skipToNext = async () => {
         newPlayer.on("ready", ({ device_id }) => {
           console.log("✅ Spotify Player prêt ! Device ID:", device_id);
           setDeviceId(device_id);
+          enableShuffle(device_id);
+          playRandomTrack();
 
-          // Activer le mode shuffle uniquement au premier démarrage
-          if (!isPlaying) {
-            enableShuffle(device_id);
-          }
-
+        
           fetchCurrentTrack(); // Récupère les infos du morceau en cours
         });
 
