@@ -297,9 +297,6 @@ const enableShuffle = async (deviceId) => {
 
 
   
-
-
-
   const togglePlayPause = async () => {
     if (!player || !accessToken || !deviceId) {
         console.log("Le lecteur n'est pas encore prêt.");
@@ -316,20 +313,19 @@ const enableShuffle = async (deviceId) => {
         }
 
         if (isPlaying) {
-            // Mettre en pause
+            // ✅ Mettre en pause sans modifier isBlurred / showOriginal
             await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${accessToken}` },
             });
             console.log('Lecture mise en pause');
         } else {
-            // Vérifier si l'utilisateur est sur mobile (iPhone)
+            // ✅ Reprendre la lecture sans affecter isBlurred
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
             if (isMobile) {
                 console.log("Lecture sur mobile détectée. Ajout d'un écouteur d'événement 'click'.");
 
-                // Lancer la lecture seulement après un clic utilisateur (nécessaire sur iOS)
                 document.body.addEventListener('click', async function playOnInteraction() {
                     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
                         method: 'PUT',
@@ -337,12 +333,11 @@ const enableShuffle = async (deviceId) => {
                     });
 
                     console.log("Lecture reprise après interaction.");
-                    document.body.removeEventListener('click', playOnInteraction); // Supprimer l'événement après un seul clic
+                    document.body.removeEventListener('click', playOnInteraction);
                 }, { once: true });
 
                 alert("Appuyez n'importe où sur l'écran pour démarrer la lecture.");
             } else {
-                // Reprendre la lecture directement sur desktop
                 await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${accessToken}` },
@@ -352,10 +347,12 @@ const enableShuffle = async (deviceId) => {
         }
 
         setIsPlaying(!isPlaying);
+
     } catch (error) {
         console.error('Erreur lors du changement d’état de lecture:', error);
     }
 };
+
 
 
 
