@@ -74,23 +74,6 @@ useEffect(() => {
 
 
 
-// 🔹 Surveiller les changements de visibilité (ex. onglet caché)
-useEffect(() => {
-  const handleVisibilityChange = async () => {
-      if (document.visibilityState === "hidden") {
-          await resetSpotifySession();
-      }
-  };
-
-  document.addEventListener("visibilitychange", handleVisibilityChange);
-
-  return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-  };
-}, []);
-
-
-
 // 🔹 Surveiller le morceau en cours et le flouter au changement
 useEffect(() => {
   if (accessToken && deviceId) {
