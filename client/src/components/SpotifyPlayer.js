@@ -74,7 +74,7 @@ const SpotifyPlayer = ({ accessToken }) => {
   };
 
 
-// ⏭ Fonction pour aller au morceau suivant
+// ⏭ Fonction pour mettre Pause ou Play
 const togglePlayPause = async () => {
     if (!player || !accessToken || !deviceId) {
         console.log("Le lecteur n'est pas encore prêt.");
