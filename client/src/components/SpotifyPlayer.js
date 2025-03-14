@@ -16,45 +16,57 @@ const SpotifyPlayer = ({ accessToken }) => {
   const DEFAULT_PLAYLIST_URI = 'spotify:playlist:7dSyZpWpn9ASoQIBUCJZ2g';
 
 
-  // Arrêter complètement la session actuelle
+
+
+  // 🛠 Arrêter complètement la session actuelle
   const resetSpotifySession = async () => {
-    if (!accessToken) return;
-    
-    try {
-        console.log("⏹️ Déconnexion de tous les appareils Web Player...");
-        
-        // 🔹 Forcer Spotify à oublier le Web Player en arrêtant la lecture
-        await fetch(`https://api.spotify.com/v1/me/player/pause`, {
-            method: 'PUT',
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-        });
+  if (!accessToken) return;
 
-        // 🔹 Changer temporairement d’appareil (ça force Spotify à oublier l'ancien Web Player)
-        const response = await fetch('https://api.spotify.com/v1/me/player/devices', {
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-        });
+  try {
+      console.log("⏹️ Déconnexion de tous les appareils Web Player...");
 
-        const data = await response.json();
-        if (data.devices.length > 0) {
-            const otherDevice = data.devices.find(d => d.id !== deviceId);
-            if (otherDevice) {
-                await fetch(`https://api.spotify.com/v1/me/player/transfer`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${accessToken}` },
-                    body: JSON.stringify({ device_ids: [otherDevice.id], play: false })
-                });
-                console.log("✅ Session transférée temporairement à un autre appareil.");
-            }
-        }
+      // 🔹 **Forcer Spotify à oublier le Web Player en arrêtant la lecture**
+      await fetch(`https://api.spotify.com/v1/me/player/pause`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+      console.log("⏸️ Lecture mise en pause.");
 
-        // 🔥 Attendre quelques secondes pour que la session soit bien réinitialisée
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      // 🗑 **Forcer Spotify à vider la file d’attente**
+      await fetch(`https://api.spotify.com/v1/me/player/queue`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+      console.log("🗑️ File d'attente supprimée.");
 
-        console.log("♻️ Web Player réinitialisé !");
-    } catch (error) {
-        console.error("❌ Erreur lors de la réinitialisation des sessions Web Player:", error);
-    }
+      // 🔄 **Vérifier et supprimer les anciens Web Player pour éviter les conflits**
+      const response = await fetch('https://api.spotify.com/v1/me/player/devices', {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+
+      const data = await response.json();
+      if (data.devices.length > 0) {
+          for (const device of data.devices) {
+              if (device.name.includes("Web Player") && device.id !== deviceId) {
+                  await fetch(`https://api.spotify.com/v1/me/player/transfer`, {
+                      method: 'PUT',
+                      headers: { 'Authorization': `Bearer ${accessToken}` },
+                      body: JSON.stringify({ device_ids: [device.id], play: false })
+                  });
+                  console.log(`🔄 Ancien Web Player déconnecté : ${device.id}`);
+              }
+          }
+      }
+
+      // 🔥 **Attendre 2 secondes pour que la session soit bien réinitialisée**
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      console.log("♻️ Web Player réinitialisé !");
+  } catch (error) {
+      console.error("❌ Erreur lors de la réinitialisation des sessions Web Player:", error);
+  }
 };
+
 
 
 
@@ -91,49 +103,6 @@ useEffect(() => {
   };
 
 
-  
-
-// Reset Session
-const resetPlayback = async () => {
-  if (!accessToken || !deviceId) return;
-
-  try {
-    console.log("⏹️ STOP lecture en cours...");
-    await fetch(`https://api.spotify.com/v1/me/player/pause`, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${accessToken}` },
-    });
-
-    // 🔄 **Passer temporairement à un autre device (hack pour forcer Spotify à oublier la session)**
-    await fetch(`https://api.spotify.com/v1/me/player/transfer`, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${accessToken}` },
-      body: JSON.stringify({ device_ids: [deviceId], play: false })
-    });
-
-    console.log("🔀 Mode shuffle activé !");
-    
-    // 🔥 **ATTENDRE pour éviter le conflit entre l'arrêt et le nouveau lancement**
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // 🗑 **Vider la file d'attente (empêche Spotify de rejouer les morceaux précédents)**
-    await fetch(`https://api.spotify.com/v1/me/player/queue`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${accessToken}` },
-    });
-
-    console.log("🗑️ File d'attente vidée.");
-
-    // 🔀 **Activer le shuffle APRÈS la réinitialisation complète**
-    await enableShuffle(deviceId);
-
-    // 🎵 **Lancer un morceau totalement aléatoire après avoir TOUT reset**
-    await playRandomTrack(deviceId);
-
-  } catch (error) {
-    console.error("❌ Erreur lors de la réinitialisation complète :", error);
-  }
-};
 
 
 
@@ -313,40 +282,26 @@ const enableShuffle = async (deviceId) => {
         }
 
         if (isPlaying) {
-            // ✅ Mettre en pause sans modifier isBlurred / showOriginal
+            // ✅ Mettre en pause sans reflouter l'image
             await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${accessToken}` },
             });
             console.log('Lecture mise en pause');
         } else {
-            // ✅ Reprendre la lecture sans affecter isBlurred
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-            if (isMobile) {
-                console.log("Lecture sur mobile détectée. Ajout d'un écouteur d'événement 'click'.");
-
-                document.body.addEventListener('click', async function playOnInteraction() {
-                    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `Bearer ${accessToken}` },
-                    });
-
-                    console.log("Lecture reprise après interaction.");
-                    document.body.removeEventListener('click', playOnInteraction);
-                }, { once: true });
-
-                alert("Appuyez n'importe où sur l'écran pour démarrer la lecture.");
-            } else {
-                await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${accessToken}` },
-                });
-                console.log("Lecture reprise sur desktop.");
-            }
+            // ✅ Reprendre la lecture
+            await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+            });
+            console.log("Lecture reprise.");
         }
 
         setIsPlaying(!isPlaying);
+
+        // ✅ Ne pas reflouter l'image après mise en pause
+        setIsBlurred(isBlurred); 
+        setIsTextBlurred(isTextBlurred);
 
     } catch (error) {
         console.error('Erreur lors du changement d’état de lecture:', error);
@@ -547,19 +502,24 @@ const skipToNext = async () => {
           volume: 0.5
         });
 
-        newPlayer.on("ready",  async ({ device_id }) => {
+
+        newPlayer.on("ready", async ({ device_id }) => {
           console.log("✅ Spotify Player prêt ! Device ID:", device_id);
           setDeviceId(device_id);
-
-          // 1️⃣ D'abord, réinitialiser la session pour éviter les conflits
+      
+          // 1️⃣ **Réinitialisation complète AVANT d'activer la lecture**
           await resetSpotifySession();
-
-          // 2️⃣ Ensuite, activer le mode shuffle
+      
+          // 2️⃣ **Activer le mode shuffle après réinitialisation**
           await enableShuffle(device_id);
-          
-          // 3️⃣ Enfin, récupérer le morceau en cours
-          fetchCurrentTrack(); 
-        });
+      
+          // 3️⃣ **Attendre un peu pour éviter les conflits avec la file d'attente**
+          await new Promise(resolve => setTimeout(resolve, 1000));
+      
+          // 4️⃣ **Forcer un morceau aléatoire immédiatement**
+          await playRandomTrack(device_id);
+      });
+      
 
         newPlayer.on("player_state_changed", (state) => {
           if (state) {
