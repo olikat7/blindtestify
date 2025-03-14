@@ -48,30 +48,47 @@ const SpotifyPlayer = ({ accessToken }) => {
     }
   };
 
+
+
+
+
+
   const fetchCurrentTrack = async () => {
     if (!accessToken) return;
+  
     try {
       const response = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
+  
       if (response.ok) {
         const data = await response.json();
-        if (data?.item) {
+        if (data && data.item) {
+          const albumCoverSpotify = data.item.album.images[0]?.url || "";
+          const albumCoverId = extractImageId(albumCoverSpotify);
+          const localCoverPath = `/albums/${albumCoverId}.jpeg`;
+  
+          // ✅ **Flouter le texte UNIQUEMENT si le morceau a changé**
+          if (!trackInfo || trackInfo.name !== data.item.name) {
+            setIsTextBlurred(true); // 🔹 Flouter uniquement au changement de morceau
+          }
+  
           setTrackInfo({
             name: data.item.name,
             artist: data.item.artists.map((artist) => artist.name).join(", "),
             albumName: data.item.album.name,
             albumReleaseYear: data.item.album.release_date.slice(0, 4),
-            albumCoverSpotify: data.item.album.images[0]?.url || "",
+            albumCoverSpotify,
+            albumCoverId,
+            localCoverPath,
           });
-          setIsBlurred(true);
-          setIsTextBlurred(true);
         }
       }
     } catch (error) {
       console.error("❌ Erreur lors de la récupération du morceau en cours:", error);
     }
   };
+  
 
 
 // ⏭ Fonction pour mettre Pause ou Play
@@ -209,6 +226,10 @@ const skipToPrevious = async () => {
 
 
 
+
+
+
+
   useEffect(() => {
     if (!accessToken) return;
     const script = document.createElement("script");
@@ -244,6 +265,34 @@ const skipToPrevious = async () => {
       };
     };
   }, [accessToken]);
+
+
+
+// 🔹 Surveiller le morceau en cours et flouter l’image si c'est une cover Spotify
+useEffect(() => {
+  if (trackInfo) {
+    console.log("🎵 Nouveau morceau détecté → Vérification de l'image locale...");
+
+    const img = new Image();
+    img.src = trackInfo.localCoverPath;
+
+    img.onload = () => {
+      console.log("✅ Image locale trouvée, pas de flou sur l'image.");
+      setIsBlurred(false); // L’image locale est nette
+    };
+
+    img.onerror = () => {
+      console.log("❌ Image locale NON trouvée, flou sur l'image.");
+      setIsBlurred(true); // **L’image Spotify est floutée uniquement**
+    };
+
+    // ✅ **Flouter le texte UNIQUEMENT si le morceau a changé**
+    setIsTextBlurred(true);
+    setShowOriginal(false); // Toujours afficher l'image locale par défaut
+  }
+}, [trackInfo]); // 🔄 Se déclenche à CHAQUE nouveau morceau
+
+
 
   return (
     <div className="spotify-player">
