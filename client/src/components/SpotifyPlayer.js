@@ -11,7 +11,6 @@ const SpotifyPlayer = ({ accessToken }) => {
 
   const PLAYLIST_URI = 'spotify:playlist:7qIjKM4EBB0V8oAxBHKg4L';
 
-  const extractImageId = (imageUrl) => imageUrl ? imageUrl.split("/").pop() : null;
 
 
 
@@ -88,8 +87,6 @@ const SpotifyPlayer = ({ accessToken }) => {
 
 
 
-
-
   const fetchCurrentTrack = async () => {
     if (!accessToken) return;
   
@@ -101,10 +98,9 @@ const SpotifyPlayer = ({ accessToken }) => {
       if (response.ok) {
         const data = await response.json();
         if (data && data.item) {
-          const albumCoverSpotify = data.item.album.images[0]?.url || "";
-          const albumCoverId = extractImageId(albumCoverSpotify);
-          const localCoverPath = `/albums/${albumCoverId}.jpeg`;
-  
+            const albumCoverSpotify = data.item.album.images[0]?.url || "";
+            const albumId = data.item.album.id;  // Récupère l'ID de l'album
+            const localCoverPath = `/albums/${albumId}.jpeg`; // 📂 Vérifie via l'ID de l'album
           // ✅ **Flouter le texte UNIQUEMENT si le morceau a changé**
           if (!trackInfo || trackInfo.name !== data.item.name) {
             setIsTextBlurred(true); // 🔹 Flouter uniquement au changement de morceau
@@ -117,6 +113,7 @@ const SpotifyPlayer = ({ accessToken }) => {
             albumReleaseYear: data.item.album.release_date.slice(0, 4),
             albumCoverSpotify,
             albumCoverId,
+            albumId,
             localCoverPath,
           });
         }
@@ -311,23 +308,20 @@ useEffect(() => {
     console.log("🎵 Nouveau morceau détecté → Vérification de l'image locale...");
 
     const img = new Image();
-    img.src = trackInfo.localCoverPath;
+    img.src = `/albums/${trackInfo.albumId}.jpeg`; // 📂 Vérifie via l'ID de l'album
 
     img.onload = () => {
-      console.log("✅ Image locale trouvée, pas de flou sur l'image.");
-      setIsBlurred(false); // L’image locale est nette
+      console.log("✅ Image locale trouvée, pas de flou.");
+      setIsBlurred(false); // ❗ Image locale nette
     };
 
     img.onerror = () => {
-      console.log("❌ Image locale NON trouvée, flou sur l'image.");
-      setIsBlurred(true); // **L’image Spotify est floutée uniquement**
+      console.log("❌ Image locale NON trouvée, flou appliqué.");
+      setIsBlurred(true); // ❗ Flouter si l’image n’existe pas
     };
-
-    // ✅ **Flouter le texte UNIQUEMENT si le morceau a changé**
-    setIsTextBlurred(true);
-    setShowOriginal(false); // Toujours afficher l'image locale par défaut
   }
 }, [trackInfo]); // 🔄 Se déclenche à CHAQUE nouveau morceau
+
 
 
 
