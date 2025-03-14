@@ -213,9 +213,11 @@ const fetchCurrentTrack = async () => {
         const albumCoverId = extractImageId(albumCoverSpotify);
         const localCoverPath = `/albums/${albumCoverId}.jpeg`; // 📂 Vérification dans public/albums/
 
-        // ✅ **🔹 REMETTRE LE FLOU À CHAQUE NOUVEAU MORCEAU**
-        setIsBlurred(true);
-        setShowOriginal(false);
+                // ✅ **🔹 Remettre le flou UNIQUEMENT si le morceau a changé**
+                if (!trackInfo || trackInfo.name !== data.item.name) {
+                  setIsBlurred(true);
+                  setIsTextBlurred(true);
+              }
 
         setTrackInfo({
           name: data.item.name,
