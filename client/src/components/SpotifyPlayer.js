@@ -16,6 +16,92 @@ const SpotifyPlayer = ({ accessToken }) => {
   const DEFAULT_PLAYLIST_URI = 'spotify:playlist:7dSyZpWpn9ASoQIBUCJZ2g';
 
 
+  // Arrêter complètement la session actuelle
+  const resetSpotifySession = async () => {
+    if (!accessToken) return;
+    
+    try {
+        console.log("⏹️ Déconnexion de tous les appareils Web Player...");
+        
+        // 🔹 Forcer Spotify à oublier le Web Player en arrêtant la lecture
+        await fetch(`https://api.spotify.com/v1/me/player/pause`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        // 🔹 Changer temporairement d’appareil (ça force Spotify à oublier l'ancien Web Player)
+        const response = await fetch('https://api.spotify.com/v1/me/player/devices', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        const data = await response.json();
+        if (data.devices.length > 0) {
+            const otherDevice = data.devices.find(d => d.id !== deviceId);
+            if (otherDevice) {
+                await fetch(`https://api.spotify.com/v1/me/player/transfer`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    body: JSON.stringify({ device_ids: [otherDevice.id], play: false })
+                });
+                console.log("✅ Session transférée temporairement à un autre appareil.");
+            }
+        }
+
+        // 🔥 Attendre quelques secondes pour que la session soit bien réinitialisée
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        console.log("♻️ Web Player réinitialisé !");
+    } catch (error) {
+        console.error("❌ Erreur lors de la réinitialisation des sessions Web Player:", error);
+    }
+};
+
+
+
+
+// 🔹 Surveiller la fermeture de l'onglet pour reset la session
+useEffect(() => {
+    const handleBeforeUnload = async () => {
+        await resetSpotifySession();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+}, []); // ❗ Exécuté UNE SEULE FOIS pour attacher l'événement
+
+
+
+// 🔹 Surveiller les changements de visibilité (ex. onglet caché)
+useEffect(() => {
+  const handleVisibilityChange = async () => {
+      if (document.visibilityState === "hidden") {
+          await resetSpotifySession();
+      }
+  };
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+  return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  };
+}, []);
+
+
+
+// 🔹 Surveiller le morceau en cours et le flouter au changement
+useEffect(() => {
+  if (accessToken && deviceId) {
+      fetchCurrentTrack();
+  }
+}, [accessToken, deviceId]); // ✅ Exécuté lorsque `accessToken` ou `deviceId` change
+
+
+
+
+
   // Fonction pour extraire l'ID de la pochette depuis l'URL Spotify
   const extractImageId = (imageUrl) => {
     return imageUrl ? imageUrl.split("/").pop() : null;
@@ -163,6 +249,9 @@ const fetchCurrentTrack = async () => {
     console.error("❌ Erreur lors de la récupération du morceau en cours:", error);
   }
 };
+
+
+
 
 
 useEffect(() => {
@@ -452,6 +541,13 @@ const skipToNext = async () => {
 
 
 
+ 
+
+
+
+
+
+
   // 🎵 Initialisation du Spotify Web Playback SDK
   useEffect(() => {
     if (!accessToken) return;
@@ -472,11 +568,15 @@ const skipToNext = async () => {
         newPlayer.on("ready", ({ device_id }) => {
           console.log("✅ Spotify Player prêt ! Device ID:", device_id);
           setDeviceId(device_id);
-          enableShuffle(device_id);
-          resetPlayback();
 
-        
-          fetchCurrentTrack(); // Récupère les infos du morceau en cours
+          // 1️⃣ D'abord, réinitialiser la session pour éviter les conflits
+          await resetSpotifySession();
+
+          // 2️⃣ Ensuite, activer le mode shuffle
+          await enableShuffle(device_id);
+          
+          // 3️⃣ Enfin, récupérer le morceau en cours
+          fetchCurrentTrack(); 
         });
 
         newPlayer.on("player_state_changed", (state) => {
