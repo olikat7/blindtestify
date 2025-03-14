@@ -112,7 +112,6 @@ const SpotifyPlayer = ({ accessToken }) => {
             albumName: data.item.album.name,
             albumReleaseYear: data.item.album.release_date.slice(0, 4),
             albumCoverSpotify,
-            albumCoverId,
             albumId,
             localCoverPath,
           });
