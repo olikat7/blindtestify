@@ -133,10 +133,13 @@ const SpotifyPlayer = ({ accessToken }) => {
             <h4>{trackInfo.artist}</h4>
           </div>
 
+          {/* 🎵 Boutons de contrôle */}
           <div className="controls">
-            <button>⏮</button>
-            <button className="play-button">{isPlaying ? "⏸" : "▶"}</button>
-            <button>⏭</button>
+            <button onClick={skipToPrevious}>⏮</button>
+            <button className="play-button" onClick={togglePlayPause}>
+              {isPlaying ? "⏸" : "▶"}
+            </button>
+            <button onClick={skipToNext}>⏭</button>
           </div>
         </>
       )}
