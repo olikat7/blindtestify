@@ -565,7 +565,7 @@ const skipToNext = async () => {
           volume: 0.5
         });
 
-        newPlayer.on("ready", ({ device_id }) => {
+        newPlayer.on("ready",  async ({ device_id }) => {
           console.log("✅ Spotify Player prêt ! Device ID:", device_id);
           setDeviceId(device_id);
 
