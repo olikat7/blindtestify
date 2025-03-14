@@ -9,7 +9,7 @@ const SpotifyPlayer = ({ accessToken }) => {
   const [isTextBlurred, setIsTextBlurred] = useState(true);
   const [showOriginal, setShowOriginal] = useState(false);
 
-  const PLAYLIST_URI = 'spotify:playlist:7dSyZpWpn9ASoQIBUCJZ2g';
+  const PLAYLIST_URI = 'spotify:playlist:7qIjKM4EBB0V8oAxBHKg4L';
 
   const extractImageId = (imageUrl) => imageUrl ? imageUrl.split("/").pop() : null;
 
@@ -108,9 +108,9 @@ const togglePlayPause = async () => {
 
         setIsPlaying(!isPlaying);
 
-        // ✅ Ne pas reflouter l'image après mise en pause
+        /* ✅ Ne pas reflouter l'image après mise en pause
         setIsBlurred(isBlurred); 
-        setIsTextBlurred(isTextBlurred);
+        setIsTextBlurred(isTextBlurred);*/
 
     } catch (error) {
         console.error('Erreur lors du changement d’état de lecture:', error);
